@@ -4,7 +4,7 @@ import sys
 import urllib.request
 from pathlib import Path
 
-REPO = "PJMatch/desktop-app"
+REPO = "PJMatch/app-desktop"
 RELEASE = "v0.1.0"
 
 CHECKPOINTS = {
