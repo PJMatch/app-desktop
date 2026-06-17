@@ -1,0 +1,4 @@
+system:
+  checkpoint_dir: "./checkpoints"
+  device: "auto"
+

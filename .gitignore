@@ -1,0 +1,46 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual environments & uv
+.venv/
+.uv/
+
+# Packaging / build artifacts
+build/
+dist/
+wheels/
+*.egg-info/
+*.egg
+
+# PyInstaller / AppImage / installer (nieużywane)
+*.spec
+AppDir/
+release/
+*.AppImage
+*.AppImage.zsync
+appimagetool*
+
+# Runtime logs
+prediction_log.txt
+
+# Model weights (hosted on GitHub Releases, download via scripts/download_checkpoints.py)
+checkpoints/*.pth
+
+# Test / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# IDE / OS
+.idea/
+.vscode/
+*.swp
+*~
+.DS_Store
+Thumbs.db

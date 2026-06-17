@@ -1,0 +1,13 @@
+[project]
+name = "app"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "mediapipe>=0.10.35",
+    "opencv-python>=4.13.0.92",
+    "pyside6>=6.11.1",
+    "pyyaml>=6.0.3",
+    "torch>=2.12.0",
+]
