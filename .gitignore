@@ -30,6 +30,9 @@ prediction_log.txt
 # Model weights (hosted on GitHub Releases, download via scripts/download_checkpoints.py)
 checkpoints/*.pth
 
+# LLM weights (download via scripts/download_llm_model.py)
+llm_model/*.gguf
+
 # Test / coverage
 .pytest_cache/
 .coverage

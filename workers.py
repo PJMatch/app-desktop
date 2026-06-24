@@ -5,6 +5,7 @@ import time
 
 import consts
 import cv2
+import requests
 from mp_node import MPNode
 from pjm_nn_node import GlossTracker, PJMPredictor, SentenceSmoother
 from PySide6.QtCore import QThread, Signal
@@ -137,7 +138,7 @@ class AIWorker(QThread):
                     final_sentence = self.smoother.process(voted_string)
 
                     if final_sentence:
-                        print(f"\n--- EMITTING TO UI: {final_sentence} ---\n")
+                        print(f"\nEMITTING TO UI: {final_sentence}\n")
                         self.prediction_ready.emit(final_sentence)
                         consts.PREDICTION_LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
                         with open(consts.PREDICTION_LOG_FILE, "a", encoding="utf-8") as f:
@@ -161,7 +162,7 @@ class AIWorker(QThread):
 
                             if voted_string == "blank":
                                 voted_string = " "
-                            print(f"\n--- EMITTING TO UI: {voted_string} ---\n")
+                            print(f"\nEMITTING TO UI: {voted_string}\n")
                             self.prediction_ready.emit(voted_string)
                             consts.PREDICTION_LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
                             with open(consts.PREDICTION_LOG_FILE, "a", encoding="utf-8") as f:
@@ -171,13 +172,6 @@ class AIWorker(QThread):
                     self.candidate_word = None
                     self.candidate_count = 0
 
-                # if voted_string:
-                #     print(f"DEBUG Tracker: {voted_string}")
-
-                #     self.prediction_ready.emit(voted_string)
-                #     with open("prediction_log.txt", "a", encoding="utf-8") as f:
-                #         f.write(voted_string + "\n")
-
     def stop(self):
         if self.mode == "CSLR":
             leftover = self.smoother._commit()
@@ -185,5 +179,66 @@ class AIWorker(QThread):
                 self.prediction_ready.emit(leftover)
 
         self.running = False
+        self.quit()
+        self.wait()
+
+
+class BielikWorker(QThread):
+    """Bielik worker.
+
+    Accumulates emitted glosses and, after a short idle period, sends them to a
+    locally served Bielik model to produce a natural Polish sentence.
+    """
+
+    word_received = Signal(str)
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.is_running = True
+        self.accumulated_glosses = []
+        self.last_word_time = time.time()
+
+    def add_task(self, new_gloss):
+        new_gloss = new_gloss.strip()
+        if new_gloss and new_gloss.lower() != "blank":
+            self.accumulated_glosses.append(new_gloss)
+            self.last_word_time = time.time()
+            print(f"LLM dodano: {new_gloss}. Czekam {consts.BIELIK_IDLE_SECONDS}s na kolejne")
+
+    def run(self):
+        while self.is_running:
+            idle = time.time() - self.last_word_time
+            if self.accumulated_glosses and idle >= consts.BIELIK_IDLE_SECONDS:
+                gloss_sequence = " ".join(self.accumulated_glosses)
+                self.accumulated_glosses.clear()
+
+                print(f"\nLLM wysyłam do modelu: {gloss_sequence}")
+
+                payload = {
+                    "model": consts.BIELIK_MODEL_NAME,
+                    "prompt": consts.BIELIK_PROMPT_TEMPLATE.format(glosses=gloss_sequence),
+                    "stream": False,
+                }
+
+                try:
+                    response = requests.post(
+                        consts.OLLAMA_API_URL,
+                        json=payload,
+                        timeout=consts.BIELIK_REQUEST_TIMEOUT,
+                    )
+                    if response.status_code == 200:
+                        sentence = response.json().get("response", "").strip()
+                        print(f"\nLLM gotowe zdanie: {sentence}")
+                        if sentence:
+                            self.word_received.emit(sentence)
+                    else:
+                        print(f"\n[LLM BŁĄD HTTP]: {response.status_code} - {response.text}")
+                except Exception as exc:
+                    print(f"Błąd Ollama: {exc}")
+
+            self.msleep(100)
+
+    def stop(self):
+        self.is_running = False
         self.quit()
         self.wait()
