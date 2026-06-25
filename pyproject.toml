@@ -5,8 +5,12 @@ description = "PJMATCH OFFICIAL RELEASE V0.1.0"
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
+    "altgraph>=0.17.5",
     "mediapipe>=0.10.35",
+    "ollama>=0.6.2",
     "opencv-python>=4.13.0.92",
+    "pyinstaller>=6.21.0",
+    "pyinstaller-hooks-contrib>=2026.6",
     "pyside6>=6.11.1",
     "pyyaml>=6.0.3",
     "requests>=2.32.0",
